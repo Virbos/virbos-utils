@@ -8,16 +8,21 @@ local splashes = {
 	"GNU + Linux",
 	"Touch grass",
 	"GNU + Virbox",
+	"Sub to Virbox",
 	"star maxfetch",
 	"Call HelpDesk!",
+	"Neovim > Emacs",
+	"Emacs > Neovim",
 	"Install Gentoo",
 	"star maxfetch fr",
 	"I use Virbos btw",
 	"Thanks Neptuneia!",
 	"Let's go with mint.",
 	"virbox matrix when?",
+    "v!distro add Virbos",
 	'"Irc better" - gerogaga',
 	'"B-but it was compiled with gcc!!!"',
+    "I'd just like to interject for a moment",
 }
 
 io.stdout:write(splashes[math.random(1, #splashes)] .. '\n')
