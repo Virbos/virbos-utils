@@ -5,7 +5,7 @@ pkgver=0.1.0
 pkgrel=1
 pkgdesc="Utilities for Virbos such as virbos-splash"
 arch=("any")
-url="https://github.com/Virbos/virbos-livescripts"
+url="https://github.com/Virbos/virbos-utils"
 license=("GPL")
 depends=("lua>=5.4")
 source=("utils::git+https://github.com/Virbos/virbos-utils.git")
