@@ -1,0 +1,54 @@
+#!/usr/bin/lua
+
+Profiles = { Workstation = {
+     Pkgs = "firefox libreoffice-fresh inkscape kdenlive gimp krita ",
+     -- PostShell variable will contain a bash command that does post package install things such as optimizing system for the specific profile.
+     PostShell = "alacritty" 
+    }}
+
+function RunCommand(command)
+    local cmd = io.popen(command)
+    local cout = cmd:read("*a")
+    local exitcode = cmd:close()
+    local out = {cout, exitcode}
+    return out
+end
+
+function Checkroot()
+    local out = RunCommand("whoami")
+    local username = out[1]:gsub("%s+", "") -- Remove leading/trailing whitespace
+    if username == "root" then
+        print("I am at your service, my king")
+    else
+        print("Do you mind giving root permissions?")
+        os.exit(1)
+    end
+end
+
+function ask_yn(question)
+    local out = RunCommand("gum confirm \""..question.."\"")
+    local exitcode = out[2]
+    if exitcode == 0 then
+        return true
+    else
+        return false
+    end
+end
+
+function ask(args)
+    local out = RunCommand("gum choose "..args)
+    local cout = out[1]
+    return cout
+end
+
+function getdeps()
+    print("Downloading script dependencies...")
+    RunCommand("pacman --noconfirm -Sy gum cpupower > /dev/null")
+end
+
+-- the following commands were used in testing of the script. Please remove them when using the profile chooser in real world.
+Checkroot()
+getdeps()
+ask_yn("Testing Out!")
+cout = ask("linux windows macos freebsd openbsd darwin solaris unix")
+print(cout)
