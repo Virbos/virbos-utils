@@ -1,54 +1,134 @@
 #!/usr/bin/lua
 
 Profiles = { Workstation = {
-     Pkgs = "firefox libreoffice-fresh inkscape kdenlive gimp krita ",
-     -- PostShell variable will contain a bash command that does post package install things such as optimizing system for the specific profile.
-     PostShell = "alacritty" 
-    }}
+    Pkgs = "firefox libreoffice-fresh inkscape kdenlive gimp krita",
+    -- PostShell variable will contain a bash command that does post package install things such as optimizing system for the specific profile.
+    PostShell = "alacritty" 
+}}
 
 function RunCommand(command)
-    local cmd = io.popen(command)
-    local cout = cmd:read("*a")
-    local exitcode = cmd:close()
-    local out = {cout, exitcode}
-    return out
+   local cmd = io.popen(command)
+   local cout = cmd:read("*a")
+   local exitcode = cmd:close()
+   local out = {cout, exitcode}
+   return out
 end
 
 function Checkroot()
-    local out = RunCommand("whoami")
-    local username = out[1]:gsub("%s+", "") -- Remove leading/trailing whitespace
-    if username == "root" then
-        print("I am at your service, my king")
-    else
-        print("Do you mind giving root permissions?")
-        os.exit(1)
-    end
+   local out = RunCommand("whoami")
+   local username = out[1]:gsub("%s+", "") -- Remove leading/trailing whitespace
+   if username == "root" then
+       print("I am at your service, my king")
+   else
+       print("Do you mind giving root permissions?")
+       os.exit(1)
+   end
 end
 
 function ask_yn(question)
-    local out = RunCommand("gum confirm \""..question.."\"")
-    local exitcode = out[2]
-    if exitcode == 0 then
-        return true
-    else
-        return false
-    end
+   local out = RunCommand("gum confirm \""..question.."\"")
+   local exitcode = out[2]
+   if exitcode == 0 then
+       return true
+   else
+       return false
+   end
 end
 
 function ask(args)
-    local out = RunCommand("gum choose "..args)
-    local cout = out[1]
-    return cout
+   local out = RunCommand("gum choose "..args)
+   local cout = out[1]
+   return cout
 end
 
 function getdeps()
-    print("Downloading script dependencies...")
-    RunCommand("pacman --noconfirm -Sy gum cpupower > /dev/null")
+   print("Downloading script dependencies...")
+   RunCommand("pacman --noconfirm -Sy gum cpupower > /dev/null 2>&1")
 end
 
--- the following commands were used in testing of the script. Please remove them when using the profile chooser in real world.
+function create_profile(name, packages, postshellcommand)
+   local ProfileData = {Pkgs = packages, PostShell = postshellcommand}
+   Profiles[name] = ProfileData
+   return 0
+end
+
+function install_pkgs(packages)
+    local out = RunCommand("pacman --noconfirm -S "..packages .." " .."> /dev/null 2>&1")
+end
+
+
+function get_profiles(inputTable)
+    local table_names = ""
+    for key, _ in pairs(inputTable) do
+      table_names = table_names .. key .. " "
+    end
+    return table_names
+end
+
+function write_file(file, data)
+    local ifile = io.open(file, "w")
+    ifile:write(data)
+    ifile:close()
+    
+end
+
+function initfiles()
+    local out = RunCommand("cat /etc/virbos-profile-old")
+    local exitcode = out[2]
+    if exitcode == 0 then
+        dofile("/etc/virbos-profile-old")
+        old_profile_exists = true
+    else
+        RunCommand("touch /etc/virbos-profile-old")
+        old_profile_exists = false
+    end
+end
+
+function clear_pkgs(packages)
+    RunCommand("pacman --noconfirm -R "..packages)
+    local out = RunCommand("pacman -Qdtq")
+    local orphanaged_packages = out[1]
+    RunCommand("pacman --noconfirm -Rns "..orphanaged_packages)
+    
+end
+
+function save_profileData(profilename, profilepkgs)
+    local oldstuff = {}
+    oldstuff[oldprofilename] = profilename
+    oldstuff[oldpkgs] = profilepkgs
+    write_file("/etc/virbos-profile-old", oldstuff)
+end
+
+  function select_profile()
+    local profs = get_profiles(Profiles)
+    RunCommand("clear")
+    local out = ask(profs)
+    local out = out:gsub('\n$', "", 1)
+    local profile = Profiles[out]
+    if old_profile_exists == true then
+        if out == oldprofilename then
+            print("The selected profile is already selected, exiting...")
+            os.exit()
+        else
+            print("Changing profile...")
+            clear_pkgs(oldpkgs)
+        end
+    else
+        print("Saving profile...")
+        save_profileData(out, profile.Pkgs)
+    end
+    
+    print("Downloading profile packages...")
+    install_pkgs(Profiles[out].Pkgs)
+    print("Running post shell commands...")
+    RunCommand(Profiles[out].PostShell)
+
+    
+end
+-- the following commands were used in testing of the script. Please remove them when using the profile chooser in real-world.
 Checkroot()
 getdeps()
-ask_yn("Testing Out!")
-cout = ask("linux windows macos freebsd openbsd darwin solaris unix")
-print(cout)
+initfiles()
+create_profile("testProfile", "cheese", "cheese > /dev/null")
+select_profile()
+
