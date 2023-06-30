@@ -22,7 +22,9 @@ local splashes = {
     "v!distro add Virbos",
 	'"Irc better" - gerogaga',
 	'"B-but it was compiled with gcc!!!"',
+	"Never gonna give you up!",
     "I'd just like to interject for a moment",
+	"systemd is the best init",
 }
 
 io.stdout:write(splashes[math.random(1, #splashes)] .. '\n')
